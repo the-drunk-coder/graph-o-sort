@@ -30,14 +30,19 @@ class Graph():
             raise GraphError("nodes for this edge not present")
         else:
             self.edges[source_node_id].append(destination_node_id)
-    def render(self, filename, comment):
+    def render(self, filename, comment, render="content"):
         dot = Digraph(comment=comment,edge_attr={'len': '6', 'weight':'0.001'})
         dot.engine = 'dot'
         # add nodes to dot graph
         for node_key in self.nodes.keys():
             node_content = "nil"
-            if len(self.nodes[node_key].content) > 0:
-                node_content = ', '.join(str(x) for x in self.nodes[node_key].content)
+            # either use id or content to mark graph nodes
+            if render == "id":
+                    node_content = self.nodes[node_key].id
+            else:
+                if len(self.nodes[node_key].content) > 0:
+                    node_content = ', '.join(str(x) for x in self.nodes[node_key].content)
+
             dot.node(str(self.nodes[node_key].id), node_content)
         #add edges to dot graph
         for edge_key in self.edges.keys():
