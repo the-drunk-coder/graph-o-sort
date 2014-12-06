@@ -7,11 +7,11 @@ from GraphStructures import *
 class QuickSorter():
     # this implementation doesn't really work in-place, but it's not that
     # important for this type of task ...
-    def __init__(self, unsorted):
+    def __init__(self, unsorted, direction="asc"):
        self.unsorted = unsorted
        self.sorting_graph = Graph()
        self.node_counter = 0
-    def quicksort(self, node_to_sort):
+    def quicksort(self, node_to_sort, prune_pivots):
         if len(node_to_sort.content) == 0:
             return node_to_sort
 
@@ -37,8 +37,8 @@ class QuickSorter():
         self.sorting_graph.add_edge(node_to_sort.id, right_unsorted_node.id)
 
         # SORTING RECURSION !!!
-        left_sorted_node = self.quicksort(left_unsorted_node)
-        right_sorted_node = self.quicksort(right_unsorted_node)
+        left_sorted_node = self.quicksort(left_unsorted_node, prune_pivots)
+        right_sorted_node = self.quicksort(right_unsorted_node, prune_pivots)
         # SORTING RECURSION !!!
 
         # assemble sorted lists
@@ -51,50 +51,62 @@ class QuickSorter():
 
         self.sorting_graph.add_edge(left_sorted_node.id, result_node.id)
         self.sorting_graph.add_edge(right_sorted_node.id, result_node.id)
-        self.sorting_graph.add_edge(pivot_node.id, result_node.id)
+        if not prune_pivots:
+            self.sorting_graph.add_edge(pivot_node.id, result_node.id)
 
         return result_node
-    def sort(self):
+    def sort(self, prune_pivots):
         # generate initial node
         initial_node = Node(self.node_counter, self.unsorted)
         self.sorting_graph.add_node(initial_node)
         # return the final node's content
-        return self.quicksort(initial_node).content
+        return self.quicksort(initial_node, prune_pivots).content
 
 class MergeSorter():
-    def __init__(self, unsorted):
+    def __init__(self, unsorted, direction="asc"):
        self.unsorted = unsorted
        self.sorting_graph = Graph()
        # count the sorting steps, this will serve as node id
        # the incremental nature of this also allows us to recunstruct the
-       # sorting process lateron
+       # sorting process later on
        self.step_counter = 0
+       # the sorting direction, ascending or descending
+       self.direction = direction
     def merge(self, left_sorted_node, right_sorted_node):
-         result = []
-         i = 0
-         j = 0
-         while(i < len(left_sorted_node.content) and j < len(right_sorted_node.content)):
-             if (left_sorted_node.content[i] <= right_sorted_node.content[j]):
-                 result.append(left_sorted_node.content[i])
-                 i = i + 1
-             else:
-                 result.append(right_sorted_node.content[j])
-                 j = j + 1
+        result = []
+        i = 0
+        j = 0
+        while(i < len(left_sorted_node.content) and j < len(right_sorted_node.content)):
+            if self.direction == "asc":
+                # merge ascending
+                if left_sorted_node.content[i] <= right_sorted_node.content[j]:
+                    result.append(left_sorted_node.content[i])
+                    i = i + 1
+                else:
+                    result.append(right_sorted_node.content[j])
+                    j = j + 1
+            elif self.direction == "desc":
+                if left_sorted_node.content[i] <= right_sorted_node.content[j]:
+                    result.append(left_sorted_node.content[i])
+                    i = i + 1
+                else:
+                    result.append(right_sorted_node.content[j])
+                    j = j + 1
 
-         result += left_sorted_node.content[i:]
-         result += right_sorted_node.content[j:]
+        result += left_sorted_node.content[i:]
+        result += right_sorted_node.content[j:]
 
-         self.step_counter += 1
+        self.step_counter += 1
 
-         merged_node = Node(self.step_counter, result)
+        merged_node = Node(self.step_counter, result)
 
-         self.sorting_graph.add_node(merged_node)
+        self.sorting_graph.add_node(merged_node)
 
-         self.sorting_graph.add_edge(left_sorted_node.id, merged_node.id)
-         self.sorting_graph.add_edge(right_sorted_node.id, merged_node.id)
+        self.sorting_graph.add_edge(left_sorted_node.id, merged_node.id)
+        self.sorting_graph.add_edge(right_sorted_node.id, merged_node.id)
 
          # return list and node id
-         return merged_node
+        return merged_node
     def mergesort(self, current_node):
         if len(current_node.content) < 2:
             return current_node
