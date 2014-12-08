@@ -1,5 +1,5 @@
 # Import graphviz
-import sys, os
+import sys, os, copy
 sys.path.append('..')
 sys.path.append('/usr/lib/graphviz/python/')
 sys.path.append('/usr/lib64/graphviz/python/')
@@ -14,10 +14,12 @@ class GraphError(Exception):
         return repr(self.message)
 
 class Node():
-    def __init__(self, node_id, node_content):
+    def __init__(self, node_id, node_content, meta=""):
         self.id = node_id
         self.content = node_content
-
+        # space for arbitrary meta information
+        self.meta = meta
+        
 class Graph():
     def __init__(self):
         self.nodes = {}
@@ -39,26 +41,39 @@ class Graph():
             # either use id or content to mark graph nodes
             if render == "id":
                     node_content = str(self.nodes[node_key].id)
-            else:
+            elif render == "content":
                 if len(self.nodes[node_key].content) > 0:
                     node_content = ', '.join(str(x) for x in self.nodes[node_key].content)
-
+            else:
+                node_content = str(self.nodes[node_key].id) + ":"
+                if len(self.nodes[node_key].content) > 0:
+                    node_content += ', '.join(str(x) for x in self.nodes[node_key].content) + ":"
+                else:
+                    node_content += "nil:"
+                if len(self.nodes[node_key].meta) > 0:
+                    node_content += self.nodes[node_key].meta
+                else:
+                    node_content += "nil"
             dot.node(str(self.nodes[node_key].id), node_content)
         #add edges to dot graph
         for edge_key in self.edges.keys():
             for dest_node in self.edges[edge_key]:
                 dot.edge(str(edge_key), str(dest_node))
-
         if not os.path.exists("graph"):
             os.makedirs("graph")
-
         dot.render("graph/" + filename + ".gv")
 
-#class GraphTool():
-#    #reverse order of edges ...
-#    def reverse_graph():
-        
-
+class GraphTool():
+    # reverse direction of edges ...
+    def reverse_digraph(self, graph):
+        reverse_graph = copy.deepcopy(graph)
+        for i in range(0, len(graph.nodes)):
+            node = graph.nodes[i]
+            for dest_node_id in graph.edges[node.id]:
+                reverse_graph.add_edge(dest_node_id, node.id)
+                reverse_graph.edges[node.id].remove(dest_node_id)
+        return reverse_graph
+    
 class TraversalTool():
     # returns node traversal, breadth first
     def bf_trav(self, graph):
