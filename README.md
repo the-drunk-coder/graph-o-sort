@@ -8,3 +8,6 @@ I've got no idea what your purpose to use this might be. I use these structures 
 algorithmic composition.
 
 Needs graphviz, pydot and this kind of stuff ... i forgot, really ... 
+
+--
+This software is public domain!
